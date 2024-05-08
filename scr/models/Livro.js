@@ -9,7 +9,7 @@ const livroSchema = new Schema({
     editora: { type: String, required: true },
     preco: { type: Number },
     paginas: { type: Number, min:10, max:5000 }, 
-    autor: { autorSchema }
+    autor:  autorSchema 
 }, { versionKey: false}); 
 
 
