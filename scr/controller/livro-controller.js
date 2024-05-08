@@ -58,15 +58,17 @@ class LivroController{
 
     static async listarLivrosPorFiltro(req, res, next){
 
-        const {editora, titulo } = req.query; 
-        const busca = {};
-        const regex = new RegExp(titulo, "i")
-        if(editora) busca.editora = editora; 
-        if(titulo) busca.titulo = regex; 
-
         try {
-            const livrosResultados = await Livro.find(busca); // 1º é a propriedade que vem do livro e a 2º é da variavel que vem por param. 
+           const busca = await processaBusca(req.query); 
+
+            if (busca !== null) {
+                const livrosResultados = await Livro
+                .find(busca)
+                .populate("autor"); // 1º é a propriedade que vem do livro e a 2º é da variavel que vem por param. 
             res.status(200).json(livrosResultados); 
+            }else{
+                res.status(200).send([]); 
+            }
         } catch (error) {
             next(error);
         }
@@ -74,5 +76,32 @@ class LivroController{
 }
 
 
+async function processaBusca(parametros){
+    const {editora, titulo, minPaginas, maxPaginas, nomeAutor } = parametros; 
+        
+    let busca = {};
+    if(editora) busca.editora = editora; 
+    if(titulo) busca.titulo = { $regex: titulo, $options: "i" };
+
+    if(minPaginas || maxPaginas) busca.paginas = {}; 
+
+    if(minPaginas) busca.paginas.$get = minPaginas; // get - é maior ou igual que
+    if(maxPaginas) busca.paginas.$let = maxPaginas; // let - menor ou igual que 
+
+    if(nomeAutor) {
+        const autor = await autor.findOne({ nome: nomeAutor });
+
+        if (autor !== null) {
+            busca.autor = autor._id; 
+        }else{
+            busca = null; 
+        }
+      
+
+        
+    }
+
+    return busca; 
+}
 export default LivroController;
 
